@@ -1,0 +1,7 @@
+Create a program that creates a child process with fork(). This child process will generate a random number between 0 and 1000. 
+The parent process will guess the number by sending this number to the child process. 
+The child process will answer with -1 when the number is too high, 0 when the number has been found and 1 when the number is too low. 
+For this pipe() will be used, making it possible to communicate between processes. 
+After the parent process has guessed correctly, the correct number will be printed as well as how many attempts the parent process used. 
+
+This task will be done in Linux and made in C. 
