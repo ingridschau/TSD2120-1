@@ -1,29 +1,68 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <pthread.h>
+#include <unistd.h>
 
-int main(){
-	FILE *fp1, *fp2;
-	char line1[50], line2[50];
-	char *n1, *n2;
+//global int variable for account balance
+int balance = 0;
+//declare mutex and files to read as global variables
+pthread_mutex_t mutex;
+FILE *fpIncome, *fpExpense;
 
-	fp1 = fopen("inn.txt" , "r");
-	fp2 = fopen("ut.txt", "r");
+void *readIncome(void *args)
+{
+	int income = 0;
 
-	if ((fp1 == NULL) || (fp2 == NULL))
+	fpIncome = fopen("inn.txt", "r");
+	
+	//iterate through the file, line by line
+	while(fscanf(fpIncome, "%d", &income)==1)
 	{
-		printf("ERROR");
-		exit(1);
+		pthread_mutex_lock(&mutex);
+		balance = balance + income;
+		pthread_mutex_unlock(&mutex);
 	}
-	while(1)
-	{
-		n1 = fgets(line1, sizeof(line1), fp1);
-		n2 = fgets(line2, sizeof(line2), fp2);
-
-		if ((n1 == NULL) || (n2 == NULL))
-		{
-			break;
-		}
-		printf("%s%s", line1, line2);
-	}
-	return 0;	
+	fclose(fpIncome);
 }
+
+void *readExpense(void *args)
+{
+	int expense = 0;
+
+	fpExpense = fopen("ut.txt", "r");
+
+	//iterare through the file, line by line
+	while(fscanf(fpExpense, "%d", &expense)==1)
+	{
+		//locks mutex, updates the balance, opens mutex
+		pthread_mutex_lock(&mutex);
+		balance = balance - expense;
+		pthread_mutex_unlock(&mutex);
+	}
+	fclose(fpExpense);
+}
+
+int main(int argc, char* argv[]){
+
+	pthread_t threads[2];
+	
+	//initializing the mutex memory
+	pthread_mutex_init(&mutex, NULL);
+	
+	//making the threads
+	pthread_create(&threads[0], NULL, &readIncome, NULL);
+	pthread_create(&threads[1], NULL, &readExpense, NULL);
+
+	pthread_join(threads[0], NULL);
+	pthread_join(threads[1], NULL);
+
+
+
+	//deleting the mutex memory
+	pthread_mutex_destroy(&mutex);
+
+	printf("Remaining balance: %d", balance);
+
+	return 0;
+}
+
